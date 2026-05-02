@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0">
+<title>Mapas de Oportunidad Mibanco — Autoconstrucción</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+         margin: 0; padding: 0; height: 100vh;
+         display: flex; flex-direction: column; overflow: hidden; }
+  /* Header con título + botón hamburguesa (siempre visible en mobile) */
+  #topbar {
+    background: #1976d2; color: white; padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 1000;
+  }
+  #topbar h1 { font-size: 16px; margin: 0; font-weight: 600; }
+  #toggle-btn {
+    background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.5);
+    color: white; padding: 6px 14px; border-radius: 6px;
+    cursor: pointer; font-size: 13px;
+  }
+  #toggle-btn:hover { background: rgba(255,255,255,0.3); }
+
+  #main { flex: 1; display: flex; min-height: 0; }
+
+  #sidebar {
+    width: 280px; background: #f4f4f4; padding: 16px;
+    border-right: 1px solid #ddd; overflow-y: auto;
+    transition: max-height 0.3s, padding 0.3s;
+  }
+  #sidebar.hidden { display: none; }
+
+  h2 { font-size: 13px; margin: 4px 0 8px 0; color: #333;
+        text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .city-btn {
+    display: block; width: 100%; padding: 14px 12px; margin: 6px 0;
+    border: 1px solid #ccc; background: white;
+    border-radius: 8px; cursor: pointer; font-size: 15px;
+    text-align: left; transition: all 0.15s;
+    -webkit-tap-highlight-color: rgba(25,118,210,0.2);
+  }
+  .city-btn:hover, .city-btn:active {
+    background: #e3f2fd; border-color: #1976d2;
+  }
+  .city-btn.active {
+    background: #1976d2; color: white; border-color: #1976d2;
+    font-weight: 600;
+  }
+
+  .info { font-size: 12px; color: #555; line-height: 1.5; margin: 8px 0; }
+
+  .leyenda {
+    background: white; padding: 12px; border-radius: 8px;
+    border: 1px solid #ddd; margin-top: 14px; font-size: 12px;
+    line-height: 1.5;
+  }
+  .leyenda strong { font-size: 13px; }
+
+  #map_container { flex: 1; min-height: 0; }
+  iframe { width: 100%; height: 100%; border: none; display: block; }
+
+  /* === MOBILE === */
+  @media (max-width: 768px) {
+    #topbar h1 { font-size: 14px; }
+    #toggle-btn { padding: 8px 14px; font-size: 14px; }
+    #main { flex-direction: column; }
+    #sidebar {
+      width: 100%; max-height: 50vh;
+      border-right: none; border-bottom: 1px solid #ddd;
+    }
+    .city-btn { padding: 16px 12px; font-size: 16px; }
+    .info, .leyenda { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <h1>🗺️ Oportunidad Mibanco</h1>
+  <button id="toggle-btn" onclick="toggleSidebar()">☰ Menú</button>
+</div>
+
+<div id="main">
+  <div id="sidebar">
+    <h2>Ciudad</h2>
+    <button class="city-btn" onclick="loadCity('mapa_lima_metropolitana.html', this)">Lima Metropolitana</button>
+<button class="city-btn" onclick="loadCity('mapa_arequipa.html', this)">Arequipa</button>
+<button class="city-btn" onclick="loadCity('mapa_trujillo.html', this)">Trujillo</button>
+<button class="city-btn" onclick="loadCity('mapa_piura.html', this)">Piura</button>
+<button class="city-btn" onclick="loadCity('mapa_huancayo.html', this)">Huancayo</button>
+<button class="city-btn" onclick="loadCity('mapa_pucallpa.html', this)">Pucallpa</button>
+<button class="city-btn" onclick="loadCity('mapa_puno.html', this)">Puno</button>
+<button class="city-btn" onclick="loadCity('mapa_juliaca.html', this)">Juliaca</button>
+
+    <div class="leyenda">
+      <strong>Capas en cada mapa</strong>
+      (selector arriba derecha):<br>
+      <b>1.</b> Manzanas (% target) — color rojo = más concentración.<br>
+      <b>2. 🔵</b> Heatmap hogares target — bolsones poblacionales.<br>
+      <b>3. 💰</b> Heatmap masa ingreso — bolsones de plata.<br>
+      <b>4. 🛒</b> Heatmap masa gasto — capacidad de consumo.<br>
+      <b>5. 🏙️</b> Límites de distrito — referencia geográfica.<br>
+      <b>6. 🔴</b> Hotspots — polígonos de zonas naranjas
+      (top 15 contornos del heatmap).
+    </div>
+
+    <p class="info">Autoconstrucción 2026 · 8 ciudades · 74 distritos.</p>
+  </div>
+
+  <div id="map_container">
+    <iframe id="map_frame" name="map_frame"
+            src="mapa_lima_metropolitana.html"></iframe>
+  </div>
+</div>
+
+<script>
+function loadCity(file, btn) {
+  document.getElementById('map_frame').src = file;
+  document.querySelectorAll('.city-btn').forEach(function(b) {
+    b.classList.remove('active');
+  });
+  btn.classList.add('active');
+  // En mobile, ocultar sidebar al elegir
+  if (window.innerWidth < 768) {
+    document.getElementById('sidebar').classList.add('hidden');
+  }
+}
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('hidden');
+}
+window.addEventListener('load', function() {
+  var first = document.querySelector('.city-btn');
+  if (first) first.classList.add('active');
+  // En mobile, ocultar sidebar al inicio para mostrar el mapa
+  if (window.innerWidth < 768) {
+    document.getElementById('sidebar').classList.add('hidden');
+  }
+});
+</script>
+</body>
+</html>
